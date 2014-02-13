@@ -77,7 +77,7 @@ var GraceDebugger = {
         this.SetStatus("Program running....");
         try {
             window.clearstdout();
-            this.VariableValues(module.call(obj));
+            this.VariableListBase(module.call(obj));
             GraceDebugger.lineCount();  // this is so back-step will stop at the line before the end of the program (would stop two lines before the end without this)
             this.SetStatus("Program has finished running");
 	    window.setLineNumber = function (n) {
@@ -99,62 +99,95 @@ var GraceDebugger = {
         
     },
 
-    VariableValues : function (that) {
-        function prb(obj, depth) {
-            var space = depth + "  "
-            if(obj != null) {
-                if(obj._value) {
-                    if(obj.className == "String")
-                        return "\"" + obj._value + "\"";
-                    else
-                        return obj._value;
-                } else if(obj.data) {
-                    var str = "{\n";
-                    for(var i in obj.data) {
-                        str += space + i + ":" + prb(obj.data[i], space) + ",\n";
-                    }
-                    str += depth + "}";
-                    return str;
-                } else {
-                    return "unknown";
-                }
-            } else {
-                return "undefined";
-            }
-        }
-        
-        var table = "Variables <div>";
-        if(that && that.methods) {
-            table += "<table class=\"debugger_vars_display\">";
-            for(var i in that.methods) {
+
+    VariableListBase : function (that) {
+        var list = document.createElement("ul");
+        if (that && that.methods) {
+            for (var i in that.methods) {
                 var variable = that.methods[i];
-                if(variable.debug) {
-                    var returnedVar = variable([0])
-                    if(returnedVar) {
-                        if(returnedVar._value) {
-                            if(returnedVar.className == "String") {
-                                table += "<tr><td>" + i + "</td><td>\""
-                                      + returnedVar._value + "\"</td></tr>\n";
-                            } else {
-                                table += "<tr><td>" + i + "</td><td>"
-                                      + returnedVar._value + "</td></tr>\n";
-                            }
-                        } else {
-                            table += "<tr><td>" + i + "</td><td>"
-                                  + prb(returnedVar, "") + "</td></tr>\n";
-                        }
-                    } else {
-                        table += "<tr><td>" + i
-                              + "</td><td>undefined</td></tr>\n";
-                    }
+                if (variable.debug) {
+                    this.VariableListItem(variable([0]), i, list);
                 }
             }
-            table += "</table>";
+            document.getElementById("debugger_vars_display").innerHTML = "Variables:";
+            document.getElementById("debugger_vars_display").appendChild(list);
         } else {
-            table += "<span style=\"color: #aaa;\">(No variables set)</span>";
-	}
-        table += "</div>";
-        document.getElementById("debugger_vars_display").innerHTML = table;
+            document.getElementById("debugger_vars_display").innerHTML = "Variables:<br /><span style=\"color: #aaa;\">(No variables set)</span>";
+        }
+      document.getElementById("debugger_vars_display").className = "treeview";
+    },
+    
+    
+    // adds a variable to the list
+    VariableListItem : function (obj, name, ul) {
+        var li = document.createElement("li");
+        li.variable = obj;
+        
+        if (obj) {
+            // Strings and Numbers
+            if (obj._value) {
+                if (obj.className == "String") {
+                    li.innerHTML = name + " : \"" + obj._value + "\"";
+                } else { // number
+                    li.innerHTML = name + " : " + obj._value;
+                }
+            }
+    
+            // Objects
+            else {
+                li.className = "submenu";
+                li.style.backgroundImage='url("closed.png")';
+                
+                var top_span = document.createElement("span");
+                var sub_ul = document.createElement("ul");
+                var bottom_span = document.createElement("span");
+                
+                //top_span.innerHTML = name + " : {}";
+                top_span.innerHTML = name + " : ";
+                sub_ul.style.display = "none";
+                
+                li.appendChild(top_span);
+                li.appendChild(sub_ul);
+                li.appendChild(bottom_span);
+                
+                li.onclick = function(e) {
+                    GraceDebugger.toggleObjList(e, this, name);
+                }
+                
+                sub_ul.onclick = function(e) {
+                    e.stopPropagation();
+                }
+            }
+        
+        // Undefined
+        } else {
+            li.innerHTML = name + " := undefined";
+        }
+        ul.appendChild(li);
+    },
+    
+    
+    // opens up or closes an object list
+    toggleObjList : function (e, li, name) {
+        e.stopPropagation();
+        var top_span = li.getElementsByTagName("span")[0];
+        var sub_ul = li.getElementsByTagName("ul")[0];
+        var bottom_span = li.getElementsByTagName("span")[li.getElementsByTagName("span").length-1];
+        
+        if(sub_ul.style.display == "block") { // hide
+            li.style.backgroundImage='url("closed.png")';
+            //top_span.innerHTML = name + " : {}";
+            sub_ul.style.display = "none";
+            //bottom_span.innerHTML = "";
+        } else { // show
+            li.style.backgroundImage='url("open.png")';
+            //top_span.innerHTML = name + " : {";
+            sub_ul.style.display = "block";
+            //sub_ul.innerHTML = "";
+            for(obj in li.variable.data)
+                GraceDebugger.VariableListItem(li.variable.data[obj], obj, sub_ul);            
+            //bottom_span.innerHTML = "}";
+        }
     },
 };
 
