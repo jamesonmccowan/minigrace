@@ -88,7 +88,7 @@ var GraceDebugger = {
                 lineNumber = n;
             }
             if(e.exctype && e.exctype == "breakpoint") {
-                this.VariableValues(e.that);
+                this.VariableListBase(e.that);
                 this.SetStatus("Program stopped on line " + lineNumber);
 
             } else {
@@ -123,37 +123,56 @@ var GraceDebugger = {
         var li = document.createElement("li");
         li.variable = obj;
         
-        if (obj) {
-            // Strings and Numbers
-            if (obj._value) {
-                if (obj.className == "String") {
-                    li.innerHTML = name + " : \"" + obj._value + "\"";
-                } else { // number
-                    li.innerHTML = name + " : " + obj._value;
-                }
-            }
-    
-            // Objects
-            else {
-                li.className = "submenu";
-                li.style.backgroundImage='url("closed.png")';
+        if (obj && obj.className) {
+            switch(obj.className) {
+                case "String":
+                    if (obj._value) {
+                        li.innerHTML = name + " : \"" + obj._value + "\"";
+                    } else {
+                        li.innerHTML = name + " : \"\"";
+                    }
+                    break;
                 
-                var top_span = document.createElement("span");
-                var sub_ul = document.createElement("ul");
+                case "Number":
+                    if (obj._value) {
+                        li.innerHTML = name + " : " + obj._value;
+                    } else {
+                        li.innerHTML = name + " : 0";
+                    }
+                    break;
                 
-                top_span.innerHTML = name + " : ";
-                sub_ul.style.display = "none";
+                case "Boolean":
+                    if (obj._value) {
+                        li.innerHTML = name + " : " + obj._value;
+                    } else {
+                        li.innerHTML = name + " : false";
+                    }
+                    break;
+                    
+                case "Object":
+                    li.className = "submenu";
+                    li.style.backgroundImage='url("closed.png")';
+                    
+                    var top_span = document.createElement("span");
+                    var sub_ul = document.createElement("ul");
+                    
+                    top_span.innerHTML = name + " : ";
+                    sub_ul.style.display = "none";
+                    
+                    li.appendChild(top_span);
+                    li.appendChild(sub_ul);
+                    
+                    li.onclick = function(e) {
+                        GraceDebugger.toggleObjList(e, this, name);
+                    }
+                    
+                    sub_ul.onclick = function(e) {
+                        e.stopPropagation();
+                    }
+                    break;
                 
-                li.appendChild(top_span);
-                li.appendChild(sub_ul);
-                
-                li.onclick = function(e) {
-                    GraceDebugger.toggleObjList(e, this, name);
-                }
-                
-                sub_ul.onclick = function(e) {
-                    e.stopPropagation();
-                }
+                default:
+                    li.innerHTML = name + " : " + obj.className;
             }
         
         // Undefined
