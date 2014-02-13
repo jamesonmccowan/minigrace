@@ -140,15 +140,12 @@ var GraceDebugger = {
                 
                 var top_span = document.createElement("span");
                 var sub_ul = document.createElement("ul");
-                var bottom_span = document.createElement("span");
                 
-                //top_span.innerHTML = name + " : {}";
                 top_span.innerHTML = name + " : ";
                 sub_ul.style.display = "none";
                 
                 li.appendChild(top_span);
                 li.appendChild(sub_ul);
-                li.appendChild(bottom_span);
                 
                 li.onclick = function(e) {
                     GraceDebugger.toggleObjList(e, this, name);
@@ -170,23 +167,16 @@ var GraceDebugger = {
     // opens up or closes an object list
     toggleObjList : function (e, li, name) {
         e.stopPropagation();
-        var top_span = li.getElementsByTagName("span")[0];
         var sub_ul = li.getElementsByTagName("ul")[0];
-        var bottom_span = li.getElementsByTagName("span")[li.getElementsByTagName("span").length-1];
         
         if(sub_ul.style.display == "block") { // hide
             li.style.backgroundImage='url("closed.png")';
-            //top_span.innerHTML = name + " : {}";
             sub_ul.style.display = "none";
-            //bottom_span.innerHTML = "";
         } else { // show
             li.style.backgroundImage='url("open.png")';
-            //top_span.innerHTML = name + " : {";
             sub_ul.style.display = "block";
-            //sub_ul.innerHTML = "";
             for(obj in li.variable.data)
                 GraceDebugger.VariableListItem(li.variable.data[obj], obj, sub_ul);            
-            //bottom_span.innerHTML = "}";
         }
     },
 };
