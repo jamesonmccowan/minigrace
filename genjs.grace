@@ -90,7 +90,16 @@ method outUnnumbered(s) {
 }
 
 method outprint(s) {
-    util.outprint(s)
+    util.outprint((object {
+        method Step(start, size) {
+            if(size > 1) then {
+                var half := (size/2).truncate
+                return Step(start, half) ++ "\n" ++ Step(start+half, size-half)
+            } else {
+                return s[start]
+            }
+        }
+    }).Step(1, s.size))
 }
 method log_verbose(s) {
     util.log_verbose(s)
@@ -1514,9 +1523,10 @@ method compile(vl, of, mn, rm, bt, glpath) {
     }
     out "  ];"
     out "\}"
-    for (output) do { o ->
-            outprint(o)
-        }
+    //for (output) do { o ->
+    //        outprint(o)
+    //    }
+    outprint(output)
     xmodule.writeGCT(modname, modname ++ ".gct")
         fromValues(values)modules(staticmodules)
     log_verbose("done.")

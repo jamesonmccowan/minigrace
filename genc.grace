@@ -53,9 +53,23 @@ var dialectHasAtModuleStart := false
 method out(s) {
     output.push(s)
 }
+var outprintstorage = []
 method outprint(s) {
-    util.outprint(s)
+    outprintstorage.push(s)
 }
+method flatten(s) {
+    return ((object {
+        method Step(start, size) {
+            if(size > 1) then {
+                var half := (size/2).truncate
+                return Step(start, half) ++ "\n" ++ Step(start+half, size-half)
+            } else {
+                return s[start]
+            }
+        }
+    }).Step(1, s.size))
+}
+
 method outswitchup {
     output := topOutput
 }
@@ -2188,12 +2202,15 @@ method compile(vl, of, mn, rm, bt) {
         out("}")
     }
     log_verbose("writing file.")
-    for (topOutput) do { x ->
-        outprint(x)
-    }
-    for (output) do { x ->
-        outprint(x)
-    }
+    //for (topOutput) do { x ->
+    //    outprint(x)
+    //}
+    //for (output) do { x ->
+    //    outprint(x)
+    //}
+    outprint(flatten(topOutput))
+    outprint(flatten(output))
+    util.outprint(flatten(outprintstorage))
 
     if (runmode == "make") then {
         log_verbose("compiling C code.")
